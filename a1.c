@@ -42,7 +42,7 @@ void waitForChildren(int numberOfChildren)
 
 int main(int argc, char *argv[])
 {
-
+    // Take arguments
     // Create all children and run them all at once
     return 0;
 }
