@@ -13,14 +13,40 @@ Assignment 1
 #include <unistd.h> // Header file for fork(), getpid(), and getppid()
 #include <sys/wait.h> // Header file for wait() and waitpid()
 
+#define MAX_CHILDREN 8
 
 // Function that computes to the nth Fibonacci number
 int fibonacci(int n)
 {
+    int previous;
+    int current;
+    int next;
+    int i;
+
     // Base case for Fibonacci sequence
+    if (n == 0)
+    {
+        return 0;
+    }
+    if (n == 1)
+    {
+        return 1;
+    }
+
     // Maybe use an iterative approach to calcualte the fibonacci
-    return 0;
+    previous = 0;
+    current = 1;
+    next = 0;
+
+    for (i = 2; i <= n; i++)
+    {
+        next = previous + current;
+        previous = current;
+        current = next;
+    }
+    return current;
 }
+
 
 // Function that creates a child process to compute a Fibonacci number
 void createChildProcess(int n)
