@@ -1,9 +1,0 @@
-Write a paragraph discussing:
-• How did you ensure the program did not create more than the required number of processes?
-• What was the most challenging aspect of this assignment?
-• How did you ensure pipes were correctly initialized between the parent and child processes?
-
-Assignment 1 Reflection
-Zaine Ancheta
-30214484
-
