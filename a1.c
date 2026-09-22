@@ -14,6 +14,9 @@ Assignment 1
 #include <sys/wait.h> // Header file for wait() and waitpid()
 
 #define MAX_CHILDREN 8
+pid_t childPIDs[MAX_CHILDREN];
+int pipes[MAX_CHILDREN][2];
+int childrenCreated = 0;
 
 // Function that computes to the nth Fibonacci number
 int fibonacci(int n)
@@ -51,12 +54,46 @@ int fibonacci(int n)
 // Function that creates a child process to compute a Fibonacci number
 void createChildProcess(int n)
 {
+    pid_t childPID;
+    int childIndex;
+    int result;
+    childIndex = childrenCreated;
+    // Create pipe for this child process
+    if (pipe(pipes[childIndex]) < 0) 
+    {
+        perror("pipe failed");
+        exit(1);
+    }
+    // Reference, Zahra Arabi, "fork" slide 4.
+    // I used her code from slide 4 to develop structure for creating the rest of the code in this function. 
+    // More specifically, the structure for a basic fork, and then incorporating the fibonacci function.
     // Create child process, assignment wants in parallel so we fork the child processes here
+    childPID = fork();
     // Check if the fork fails
+    if (childPID < 0)
+    {
+        perror("fork failed");
+        exit(1);
+    }
     // If not, proceed and call the fibonacci function and have the child output its result
-    // Exit to prevent the child from creating more processes
+    if (childPID == 0)
+    {
+        // Child does not need to read from the pipe
+        close(pipes[childIndex][0]);
+        result = fibonacci(n);
+        // Send the result to the parent process through the pipe
+        write(pipes[childIndex][1], &result, sizeof(result));
+        // Close the writing end of the pipe
+        close(pipes[childIndex][1]);
+        // Exit to prevent the child from creating more processes
+        exit(0);
+    }
+    // Save the child process ID
+    childPIDs[childIndex] = childPID;
+    // Parent does not need to write to the pipe
+    close(pipes[childIndex][1]);
+    childrenCreated++;
 }
-
 // Function that waits for all child processes to finish
 void waitForChildren(int numberOfChildren)
 {
