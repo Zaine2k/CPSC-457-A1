@@ -34,9 +34,9 @@ Used this discussion to understand that pipe() creates two file descriptors:
 index 0 is used to read from the pipe and index 1 is used to write to the pipe.
 */
 
-pid_t childPIDs[MAX_CHILDREN];  /* Stores the PID of each child process */
-int pipes[MAX_CHILDREN][2];     /* Stores one pipe for each child: [0] read end, [1] write end */
-int childrenCreated = 0;        /* Tracks how many child processes have been created */
+pid_t childPIDs[MAX_CHILDREN]; /* Stores the PID of each child process */
+int pipes[MAX_CHILDREN][2]; /* Stores one pipe for each child: [0] read end, [1] write end */
+int childrenCreated = 0; /* Tracks how many child processes have been created */
 
 /* Function that computes to the nth Fibonacci number */
 int fibonacci(int n)
@@ -60,7 +60,6 @@ int fibonacci(int n)
     /* Iterative approach for the fibonacci sequence */
     previous = 0;
     current = 1;
-    next = 0;
 
     for (i = 2; i <= n; i++)
     {
@@ -88,17 +87,17 @@ void createChildProcess(int n)
         exit(1);
     }
 
-/*
-Reference, Zahra Arabi, "fork" slide 4. (Lines 72-96)
-I used her code from slide 4 to develop a basic structure for creating the rest
-of the code in this function.
-More specifically, the structure for a basic fork, and then incorporating my existing fibonacci function.
-*/
+    /*
+    Reference, Zahra Arabi, "fork" slide 4. (Lines 72-96)
+    I used her code from slide 4 to develop a basic structure for creating the rest
+    of the code in this function.
+    More specifically, the structure for a basic fork, and then incorporating my existing fibonacci function.
+    */
 
-/*
-Create child process, assignment wants in parallel so we fork
-the child processes here
-*/
+    /*
+    Create child process, assignment wants in parallel so we fork
+    the child processes here
+    */
 
     childPID = fork();
 
@@ -106,6 +105,16 @@ the child processes here
     if (childPID < 0)
     {
         perror("fork failed");
+
+        /*
+        Reference: https://man.archlinux.org/man/close.2.en
+        Accessed Sept 22
+        Used this documentation to understand how close() closes a file descriptor.
+        A small optimization to close both of the pipe before we end the program.
+        */
+        close(pipes[childIndex][0]);
+        close(pipes[childIndex][1]);
+
         exit(1);
     }
 
@@ -135,7 +144,7 @@ the child processes here
 
     /* Parent does not need to write to the pipe */
     close(pipes[childIndex][1]);
-    
+
     childrenCreated++;
 }
 
@@ -148,7 +157,11 @@ void waitForChildren(int numberOfChildren)
     for (i = 0; i < numberOfChildren; i++)
     {
         /* Once children are all done processing */
-        waitpid(childPIDs[i], NULL, 0);
+        if (waitpid(childPIDs[i], NULL, 0) < 0)
+        {
+            perror("waitpid failed");
+            exit(1);
+        }
     }
 
     /* Then parent process can stop, using wait() or waitpid() */
@@ -178,7 +191,7 @@ int main(int argc, char *argv[])
     }
 
     /* Checks if more arguments were passed than required */
-    if (argc > 9)
+    if (argc > MAX_CHILDREN + 1)
     {
         /* Tell user they entered too many values */
         printf("Error: Maximum of 8 arguments allowed.\n");
@@ -234,5 +247,6 @@ int main(int argc, char *argv[])
             result
         );
     }
+
     return 0;
 }
