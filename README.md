@@ -24,13 +24,13 @@ git clone https://github.com/Zaine2k/CPSC-457-A1.git a1
 Then move to the boilerplate directory:
 
 ```bash
-cd ~/cpsc457-minix-boilerplate-0.2.3
+cd ~/cpsc457-minix-boilerplate-0.2.3/build
 ```
 
 Copy the source files into MINIX:
 
 ```bash
-./copy_files_src.sh
+./copy_src_files.sh
 ```
 
 Start MINIX using the course-provided setup.
