@@ -8,13 +8,17 @@ Assignment 1
 */
 
 /*
-Ran into compilation errors because the provided MINIX compiler did not support "//" comments.
-I used ChatGPT to convert the comments in this file to C-style block comments to avoid these errors.
-Refer to my second commit on Sep 22 in my GitHub repository.
+Heads Up!
+Ran into compilation errors because the provided MINIX compiler did not always support "//" comments.
+It was able to run at first, however it made debugging annoying due to all the comment warnings and then down the line, errors.
+
+I used ChatGPT to convert the "//" comments in this file to C-style block "/*" comments to avoid these errors.
+Refer to my second commit on Sep 22 in my GitHub repository, I prompted it to only change comments and not any logic.
+I did not want to go line by line changing comments! I hope you understand and I believe this doesn't violate any academic policy.
 */
 
 /*
-Omar on discord in "t05-t11-14-zahra", suggested this line to enable Minix declarations.
+Omar on discord in "t05-t11-14-zahra", suggested this line to enable Minix declarations to everyone in tutorial.
 I added it for any future changes.
 */
 #define _MINIX 1
@@ -25,14 +29,15 @@ I added it for any future changes.
 #include <unistd.h> /* Header file for fork(), getpid(), and getppid() */
 #include <sys/wait.h> /* Header file for wait() and waitpid() */
 
+/*Constants and exit codes*/
 #define MAX_CHILDREN 8
 
-/*
-Reference: https://stackoverflow.com/questions/35616033/understanding-pipe-function 
-Accessed Sept 20
-Used this discussion to understand that pipe() creates two file descriptors: 
-index 0 is used to read from the pipe and index 1 is used to write to the pipe.
-*/
+#define EXIT_SUCCESS_CODE 0
+#define EXIT_INPUT_ERROR 1
+#define EXIT_PIPE_ERROR 2
+#define EXIT_FORK_ERROR 3
+#define EXIT_WAIT_ERROR 4
+
 
 pid_t childPIDs[MAX_CHILDREN]; /* Stores the PID of each child process */
 int pipes[MAX_CHILDREN][2]; /* Stores one pipe for each child: [0] read end, [1] write end */
@@ -80,15 +85,22 @@ void createChildProcess(int n)
 
     childIndex = childrenCreated;
 
+    /*
+    Reference: https://stackoverflow.com/questions/35616033/understanding-pipe-function 
+    Accessed Sept 20
+    Used this discussion to understand that pipe() creates two file descriptors: 
+    index 0 is used to read from the pipe and index 1 is used to write to the pipe.
+    */
+
     /* Create pipe for this child process */
     if (pipe(pipes[childIndex]) < 0)
     {
         perror("pipe failed");
-        exit(1);
+        exit(EXIT_PIPE_ERROR);
     }
 
     /*
-    Reference, Zahra Arabi, "fork" slide 4. (Lines 72-96)
+    Reference, Zahra Arabi, "fork" slide 4.
     I used her code from slide 4 to develop a basic structure for creating the rest
     of the code in this function.
     More specifically, the structure for a basic fork, and then incorporating my existing fibonacci function.
@@ -98,7 +110,6 @@ void createChildProcess(int n)
     Create child process, assignment wants in parallel so we fork
     the child processes here
     */
-
     childPID = fork();
 
     /* Check if the fork fails */
@@ -115,12 +126,18 @@ void createChildProcess(int n)
         close(pipes[childIndex][0]);
         close(pipes[childIndex][1]);
 
-        exit(1);
+        exit(EXIT_FORK_ERROR);
     }
 
     /*
     If not, proceed and call the fibonacci function and have
-    the child output its result
+    the child output its result.
+
+    Reference, https://man7.org/linux/man-pages/man2/write.2.html?
+    Accessed Sept 20
+    Early in planning, I had initially designed it with snprintf() in mind, meaning taking the fibonacci integer output as text.
+    Instead, I had decided to take the integer outputs, take their binary form and read out its binary form as an integer by default.
+    This simplifies the IPC code tremendously and avoids compiler incompatibilities.
     */
     if (childPID == 0)
     {
@@ -136,7 +153,7 @@ void createChildProcess(int n)
         close(pipes[childIndex][1]);
 
         /* Exit to prevent the child from creating more processes */
-        exit(0);
+        exit(EXIT_SUCCESS_CODE);
     }
 
     /* Save the child process ID */
@@ -160,11 +177,9 @@ void waitForChildren(int numberOfChildren)
         if (waitpid(childPIDs[i], NULL, 0) < 0)
         {
             perror("waitpid failed");
-            exit(1);
+            exit(EXIT_WAIT_ERROR);
         }
     }
-
-    /* Then parent process can stop, using wait() or waitpid() */
 }
 
 /*
@@ -178,7 +193,9 @@ int main(int argc, char *argv[])
     int result;
     int i;
 
-    /* Take arguments */
+    /* 
+    Take arguments and perform input validation.
+    */
 
     /* Check that at least one Fibonacci number was provided */
     if (argc < 2)
@@ -187,7 +204,7 @@ int main(int argc, char *argv[])
         printf("Usage: %s <n1> <n2> ... <n8>\n", argv[0]);
 
         /* End program because no input was given */
-        return 1;
+        return EXIT_INPUT_ERROR;
     }
 
     /* Checks if more arguments were passed than required */
@@ -197,7 +214,7 @@ int main(int argc, char *argv[])
         printf("Error: Maximum of 8 arguments allowed.\n");
 
         /* End program because input is invalid */
-        return 1;
+        return EXIT_INPUT_ERROR;
     }
 
     /* Number of inputs equals number of children to create */
@@ -205,8 +222,13 @@ int main(int argc, char *argv[])
 
     /* Convert and validate all command-line arguments first */
     for (i = 0; i < numberOfChildren; i++)
-    {
-        /* Convert the argument from a string to an integer */
+    {   
+        /*
+        Reference: https://www.tutorialspoint.com/c_standard_library/c_function_atoi.htm
+        Accessed Sept 21
+        Wanted a simple way to convert argument strings into integers.
+        Used this documentation to understand how atoi() converts a string into an integer.
+        */
         fibonacciInputs[i] = atoi(argv[i + 1]);
 
         /* Check that the Fibonacci input is not negative */
@@ -216,7 +238,7 @@ int main(int argc, char *argv[])
             printf("Error: Fibonacci input must be non-negative.\n");
 
             /* End program if input is invalid */
-            return 1;
+            return EXIT_INPUT_ERROR;
         }
     }
 
@@ -248,5 +270,5 @@ int main(int argc, char *argv[])
         );
     }
 
-    return 0;
+    return EXIT_SUCCESS_CODE;
 }
