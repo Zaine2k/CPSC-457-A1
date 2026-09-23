@@ -7,9 +7,16 @@ TA: Zahra Arabi
 Assignment 1
 */
 
+/*
+Ran into compilation errors because the provided MINIX compiler did not support "//" comments.
+I used ChatGPT to convert the comments in this file to C-style block comments to avoid these errors.
+Refer to my second commit on Sep 22 in my GitHub repository.
+*/
 
-/*Omar on discord in "t05-t11-14-zahra", suggested this line to enable Minix declarations.
-I added it for any future changes.*/
+/*
+Omar on discord in "t05-t11-14-zahra", suggested this line to enable Minix declarations.
+I added it for any future changes.
+*/
 #define _MINIX 1
 
 #include <stdlib.h> /* Standard header file for C */
@@ -20,14 +27,16 @@ I added it for any future changes.*/
 
 #define MAX_CHILDREN 8
 
-/*Reference: https://stackoverflow.com/questions/35616033/understanding-pipe-function */
-/*Accessed Sept 20*/
-/* Used this discussion to understand that pipe() creates two file descriptors: 
-index 0 is used to read from the pipe and index 1 is used to write to the pipe. */
+/*
+Reference: https://stackoverflow.com/questions/35616033/understanding-pipe-function 
+Accessed Sept 20
+Used this discussion to understand that pipe() creates two file descriptors: 
+index 0 is used to read from the pipe and index 1 is used to write to the pipe.
+*/
 
-pid_t childPIDs[MAX_CHILDREN];
-int pipes[MAX_CHILDREN][2];
-int childrenCreated = 0;
+pid_t childPIDs[MAX_CHILDREN];  /* Stores the PID of each child process */
+int pipes[MAX_CHILDREN][2];     /* Stores one pipe for each child: [0] read end, [1] write end */
+int childrenCreated = 0;        /* Tracks how many child processes have been created */
 
 /* Function that computes to the nth Fibonacci number */
 int fibonacci(int n)
@@ -79,17 +88,18 @@ void createChildProcess(int n)
         exit(1);
     }
 
-    /*
-    Reference, Zahra Arabi, "fork" slide 4. (Lines 72-96)
-    I used her code from slide 4 to develop a basic structure for creating the rest
-    of the code in this function.
-    More specifically, the structure for a basic fork, and then incorporating my existing fibonacci function.
-    */
+/*
+Reference, Zahra Arabi, "fork" slide 4. (Lines 72-96)
+I used her code from slide 4 to develop a basic structure for creating the rest
+of the code in this function.
+More specifically, the structure for a basic fork, and then incorporating my existing fibonacci function.
+*/
 
-    /*
-    Create child process, assignment wants in parallel so we fork
-    the child processes here
-    */
+/*
+Create child process, assignment wants in parallel so we fork
+the child processes here
+*/
+
     childPID = fork();
 
     /* Check if the fork fails */
@@ -125,7 +135,7 @@ void createChildProcess(int n)
 
     /* Parent does not need to write to the pipe */
     close(pipes[childIndex][1]);
-
+    
     childrenCreated++;
 }
 
@@ -180,7 +190,7 @@ int main(int argc, char *argv[])
     /* Number of inputs equals number of children to create */
     numberOfChildren = argc - 1;
 
-    /* Create all children and run them all at once */
+    /* Convert and validate all command-line arguments first */
     for (i = 0; i < numberOfChildren; i++)
     {
         /* Convert the argument from a string to an integer */
@@ -195,7 +205,11 @@ int main(int argc, char *argv[])
             /* End program if input is invalid */
             return 1;
         }
+    }
 
+    /* Create all children after the inputs have been validated */
+    for (i = 0; i < numberOfChildren; i++)
+    {
         /* Create a child to compute this Fibonacci number */
         createChildProcess(fibonacciInputs[i]);
     }
@@ -220,7 +234,5 @@ int main(int argc, char *argv[])
             result
         );
     }
-
-    /* End the program successfully */
     return 0;
 }
