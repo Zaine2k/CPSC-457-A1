@@ -7,6 +7,11 @@ TA: Zahra Arabi
 Assignment 1
 */
 
+
+/*Omar on discord in "t05-t11-14-zahra", suggested this line to enable Minix declarations.
+I added it for any future changes.*/
+#define _MINIX 1
+
 #include <stdlib.h> /* Standard header file for C */
 #include <stdio.h> /* Header file for printf function */
 #include <sys/types.h> /* Header file for process IDs (PID) */
@@ -14,6 +19,11 @@ Assignment 1
 #include <sys/wait.h> /* Header file for wait() and waitpid() */
 
 #define MAX_CHILDREN 8
+
+/*Reference: https://stackoverflow.com/questions/35616033/understanding-pipe-function */
+/*Accessed Sept 20*/
+/* Used this discussion to understand that pipe() creates two file descriptors: 
+index 0 is used to read from the pipe and index 1 is used to write to the pipe. */
 
 pid_t childPIDs[MAX_CHILDREN];
 int pipes[MAX_CHILDREN][2];
@@ -71,10 +81,9 @@ void createChildProcess(int n)
 
     /*
     Reference, Zahra Arabi, "fork" slide 4. (Lines 72-96)
-    I used her code from slide 4 to develop structure for creating the rest
+    I used her code from slide 4 to develop a basic structure for creating the rest
     of the code in this function.
-    More specifically, the structure for a basic fork, and then
-    incorporating the fibonacci function.
+    More specifically, the structure for a basic fork, and then incorporating my existing fibonacci function.
     */
 
     /*
